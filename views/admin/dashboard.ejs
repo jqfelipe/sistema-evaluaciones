@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin - Evaluaciones</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Admin Panel</div>
+    <div class="nav-links">
+      <a href="/admin" class="btn btn-sm <%= typeof page !== 'undefined' && page === 'dashboard' ? 'btn-primary' : 'btn-outline' %>">Evaluaciones</a>
+      <a href="/admin/results" class="btn btn-sm btn-outline">Resultados</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Usuarios</a>
+      <span class="nav-user">👤 <%= user.name %></span>
+      <a href="/" class="btn btn-sm btn-outline">Ver Quiz</a>
+      <a href="/logout" class="btn btn-sm btn-outline">Salir</a>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="page-header">
+      <h1>Mis Evaluaciones</h1>
+    </div>
+
+    <div class="card">
+      <h2>Nueva Evaluación</h2>
+      <form method="POST" action="/admin/quizzes" class="inline-form">
+        <input type="text" name="title" placeholder="Título de la evaluación" required class="input-lg">
+        <input type="text" name="description" placeholder="Descripción (opcional)" class="input-lg">
+        <button type="submit" class="btn btn-primary">➕ Crear</button>
+      </form>
+    </div>
+
+    <% if (quizzes.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <p>Aún no hay evaluaciones. ¡Crea la primera!</p>
+      </div>
+    <% } else { %>
+      <div class="quizzes-grid">
+        <% quizzes.forEach(q => { %>
+          <div class="quiz-item-card <%= q.is_active ? 'active' : 'inactive' %>">
+            <div class="quiz-item-header">
+              <h3><%= q.title %></h3>
+              <span class="badge <%= q.is_active ? 'badge-success' : 'badge-muted' %>">
+                <%= q.is_active ? '🟢 Activa' : '⚫ Inactiva' %>
+              </span>
+            </div>
+            <% if (q.description) { %><p class="quiz-item-desc"><%= q.description %></p><% } %>
+            <p class="quiz-item-meta">Creada: <%= new Date(q.created_at).toLocaleDateString('es') %></p>
+            <div class="quiz-item-actions">
+              <a href="/admin/quizzes/<%= q.id %>/questions" class="btn btn-sm btn-primary">✏️ Preguntas</a>
+              <a href="/admin/results/<%= q.id %>" class="btn btn-sm btn-outline">📊 Resultados</a>
+              <button type="button" class="btn btn-sm btn-outline"
+                onclick="openEditModal(<%= q.id %>, `<%- q.title.replace(/`/g,'\\`') %>`, `<%- (q.description||'').replace(/`/g,'\\`') %>`)">
+                🏷 Renombrar
+              </button>
+              <form method="POST" action="/admin/quizzes/<%= q.id %>/duplicate" style="display:inline">
+                <button type="submit" class="btn btn-sm btn-outline">📋 Duplicar</button>
+              </form>
+              <form method="POST" action="/admin/quizzes/<%= q.id %>/toggle" style="display:inline">
+                <button type="submit" class="btn btn-sm btn-outline">
+                  <%= q.is_active ? '⏸ Desactivar' : '▶ Activar' %>
+                </button>
+              </form>
+              <form method="POST" action="/admin/quizzes/<%= q.id %>/delete" style="display:inline"
+                onsubmit="return confirm('¿Eliminar esta evaluación y todas sus preguntas?')">
+                <button type="submit" class="btn btn-sm btn-danger">🗑 Eliminar</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+
+  <!-- Modal Renombrar -->
+  <div id="editModal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeEditModal()">
+    <div class="modal-card">
+      <h2>🏷 Renombrar evaluación</h2>
+      <form method="POST" id="editForm">
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" name="title" id="editTitle" required class="input-lg">
+        </div>
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" name="description" id="editDesc" class="input-lg" placeholder="(opcional)">
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Guardar</button>
+          <button type="button" class="btn btn-outline" onclick="closeEditModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openEditModal(id, title, desc) {
+      document.getElementById('editForm').action = '/admin/quizzes/' + id + '/edit';
+      document.getElementById('editTitle').value = title;
+      document.getElementById('editDesc').value = desc;
+      document.getElementById('editModal').style.display = 'flex';
+      document.getElementById('editTitle').focus();
+    }
+    function closeEditModal() {
+      document.getElementById('editModal').style.display = 'none';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditModal(); });
+  </script>
+</body>
+</html>

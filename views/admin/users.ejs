@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios - Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Admin Panel</div>
+    <div class="nav-links">
+      <a href="/admin" class="btn btn-sm btn-outline">Evaluaciones</a>
+      <a href="/admin/results" class="btn btn-sm btn-outline">Resultados</a>
+      <a href="/admin/users" class="btn btn-sm btn-primary">Usuarios</a>
+      <span class="nav-user">👤 <%= user.name %></span>
+      <a href="/logout" class="btn btn-sm btn-outline">Salir</a>
+    </div>
+  </nav>
+  <main class="container">
+
+    <% const urlError = /* inline check */ false; %>
+    <% if (typeof query !== 'undefined' && query && query.error === 'last_admin') { %>
+      <div class="alert alert-error">No puedes quitar el rol o deshabilitar al único administrador activo.</div>
+    <% } %>
+
+    <!-- CORREOS PERMITIDOS -->
+    <div class="page-header" style="margin-top:0">
+      <h1>📧 Correos autorizados</h1>
+      <p>Solo los correos en esta lista pueden crear una cuenta.</p>
+    </div>
+
+    <div class="card">
+      <form method="POST" action="/admin/allowed-emails" class="inline-form">
+        <input type="email" name="email" placeholder="correo@ejemplo.com" required class="input-lg">
+        <button type="submit" class="btn btn-primary">➕ Agregar</button>
+      </form>
+    </div>
+
+    <% if (allowed.length === 0) { %>
+      <div class="empty-state" style="padding:2rem">
+        <p>No hay correos registrados aún. El primer usuario admin puede agregar correos aquí.</p>
+      </div>
+    <% } else { %>
+      <div class="users-table-wrap">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Correo</th>
+              <th>Estado</th>
+              <th>Registrado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% allowed.forEach(a => { %>
+              <tr class="<%= !a.is_active ? 'row-disabled' : '' %>">
+                <td><code><%= a.email %></code></td>
+                <td>
+                  <span class="badge <%= a.is_active ? 'badge-success' : 'badge-danger' %>">
+                    <%= a.is_active ? '✅ Activo' : '🚫 Bloqueado' %>
+                  </span>
+                </td>
+                <td class="text-muted"><%= new Date(a.created_at).toLocaleDateString('es') %></td>
+                <td>
+                  <form method="POST" action="/admin/allowed-emails/<%= a.id %>/toggle" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-outline">
+                      <%= a.is_active ? '🚫 Bloquear' : '✅ Activar' %>
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/allowed-emails/<%= a.id %>/delete" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar este correo de la lista?')">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+    <!-- USUARIOS REGISTRADOS -->
+    <div class="page-header" style="margin-top:2rem">
+      <h1>👥 Usuarios registrados</h1>
+    </div>
+
+    <div class="users-table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(u => { %>
+            <tr class="<%= !u.is_active ? 'row-disabled' : '' %>">
+              <td>
+                <%= u.name %>
+                <% if (u.id === user.id) { %><span class="badge badge-muted">tú</span><% } %>
+              </td>
+              <td><code><%= u.email %></code></td>
+              <td>
+                <span class="badge <%= u.is_admin ? 'badge-admin' : 'badge-muted' %>">
+                  <%= u.is_admin ? '⭐ Admin' : '👤 Usuario' %>
+                </span>
+              </td>
+              <td>
+                <span class="badge <%= u.is_active ? 'badge-success' : 'badge-danger' %>">
+                  <%= u.is_active ? '✅ Activo' : '🚫 Inactivo' %>
+                </span>
+              </td>
+              <td>
+                <% if (u.id !== user.id) { %>
+                  <form method="POST" action="/admin/users/<%= u.id %>/toggle-admin" style="display:inline">
+                    <button type="submit" class="btn btn-sm btn-outline"
+                      title="<%= u.is_admin ? 'Quitar rol de admin' : 'Dar rol de admin' %>">
+                      <%= u.is_admin ? '⭐ Quitar admin' : '⭐ Hacer admin' %>
+                    </button>
+                  </form>
+                  <form method="POST" action="/admin/users/<%= u.id %>/toggle-active" style="display:inline">
+                    <button type="submit" class="btn btn-sm <%= u.is_active ? 'btn-danger' : 'btn-outline' %>"
+                      onsubmit="return confirm('<%= u.is_active ? `¿Deshabilitar a ${u.name}?` : `¿Habilitar a ${u.name}?` %>')">
+                      <%= u.is_active ? '🚫 Deshabilitar' : '✅ Habilitar' %>
+                    </button>
+                  </form>
+                <% } else { %>
+                  <span class="text-muted" style="font-size:0.8rem">No puedes modificar tu propia cuenta</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preguntas - <%= quiz.title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Admin Panel</div>
+    <div class="nav-links">
+      <a href="/admin" class="btn btn-sm btn-outline">← Evaluaciones</a>
+      <a href="/admin/results/<%= quiz.id %>" class="btn btn-sm btn-outline">📊 Resultados</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Usuarios</a>
+      <span class="nav-user">👤 <%= user.name %></span>
+      <a href="/logout" class="btn btn-sm btn-outline">Salir</a>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="page-header">
+      <h1>✏️ <%= quiz.title %></h1>
+      <% if (quiz.description) { %><p><%= quiz.description %></p><% } %>
+    </div>
+
+    <div class="card">
+      <h2>Agregar Pregunta</h2>
+      <form method="POST" action="/admin/quizzes/<%= quiz.id %>/questions" id="questionForm">
+        <div class="form-group">
+          <label>Texto de la pregunta</label>
+          <input type="text" name="text" required placeholder="Escribe la pregunta..." class="input-lg">
+        </div>
+        <div class="form-group">
+          <label>Tipo de pregunta</label>
+          <select name="type" id="typeSelect" class="input-lg" onchange="toggleOptions(this.value)">
+            <option value="multiple_choice">🔘 Opción múltiple</option>
+            <option value="open_ended">✏️ Desarrollo (respuesta libre)</option>
+          </select>
+        </div>
+        <div id="optionsSection" class="form-group">
+          <label>Opciones de respuesta <small>(una por campo)</small></label>
+          <div id="optionsList">
+            <input type="text" name="options" placeholder="Opción 1" class="option-input">
+            <input type="text" name="options" placeholder="Opción 2" class="option-input">
+            <input type="text" name="options" placeholder="Opción 3" class="option-input">
+          </div>
+          <button type="button" class="btn btn-sm btn-outline" onclick="addOption()">➕ Agregar opción</button>
+        </div>
+        <button type="submit" class="btn btn-primary">Agregar Pregunta</button>
+      </form>
+    </div>
+
+    <% if (questions.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">❓</div>
+        <p>Aún no hay preguntas. ¡Agrega la primera!</p>
+      </div>
+    <% } else { %>
+      <h2>Preguntas (<%= questions.length %>)</h2>
+      <% questions.forEach((q, i) => { %>
+        <div class="question-card">
+          <div class="question-header">
+            <span class="question-num">Pregunta <%= i + 1 %></span>
+            <span class="question-type <%= q.type %>">
+              <%= q.type === 'multiple_choice' ? '🔘 Opción múltiple' : '✏️ Desarrollo' %>
+            </span>
+          </div>
+          <p class="question-text"><%= q.text %></p>
+          <% if (q.type === 'multiple_choice' && q.options.length > 0) { %>
+            <ul class="options-preview">
+              <% q.options.forEach(o => { %><li>• <%= o.text %></li><% }) %>
+            </ul>
+          <% } %>
+          <div class="question-actions">
+              <button type="button" class="btn btn-sm btn-outline"
+                onclick='openEditQuestion(<%- JSON.stringify(q) %>)'>
+                ✏️ Editar
+              </button>
+              <form method="POST" action="/admin/questions/<%= q.id %>/delete"
+                onsubmit="return confirm('¿Eliminar esta pregunta?')">
+                <button type="submit" class="btn btn-sm btn-danger">🗑 Eliminar</button>
+              </form>
+            </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </main>
+
+  <!-- Modal Editar Pregunta -->
+  <div id="editQModal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeEditQ()">
+    <div class="modal-card modal-card-lg">
+      <h2>✏️ Editar pregunta</h2>
+      <form method="POST" id="editQForm">
+        <div class="form-group">
+          <label>Texto de la pregunta</label>
+          <input type="text" name="text" id="editQText" required class="input-lg">
+        </div>
+        <div class="form-group">
+          <label>Tipo</label>
+          <select name="type" id="editQType" class="input-lg" onchange="toggleEditOptions(this.value)">
+            <option value="multiple_choice">🔘 Opción múltiple</option>
+            <option value="open_ended">✏️ Desarrollo</option>
+          </select>
+        </div>
+        <div id="editOptionsSection" class="form-group">
+          <label>Opciones <small>(haz clic en ✕ para eliminar una opción)</small></label>
+          <div id="editOptionsList"></div>
+          <button type="button" class="btn btn-sm btn-outline" onclick="addEditOption()" style="margin-top:0.4rem">
+            ➕ Agregar opción
+          </button>
+        </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">💾 Guardar cambios</button>
+          <button type="button" class="btn btn-outline" onclick="closeEditQ()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function toggleOptions(type) {
+      document.getElementById('optionsSection').style.display =
+        type === 'multiple_choice' ? 'block' : 'none';
+    }
+    function addOption() {
+      const input = document.createElement('input');
+      input.type = 'text'; input.name = 'options';
+      input.placeholder = 'Nueva opción'; input.className = 'option-input';
+      document.getElementById('optionsList').appendChild(input);
+    }
+
+    function openEditQuestion(q) {
+      document.getElementById('editQForm').action = '/admin/questions/' + q.id + '/edit';
+      document.getElementById('editQText').value = q.text;
+      document.getElementById('editQType').value = q.type;
+      const list = document.getElementById('editOptionsList');
+      list.innerHTML = '';
+      (q.options || []).forEach(o => list.appendChild(makeExistingOption(o.id, o.text)));
+      toggleEditOptions(q.type);
+      document.getElementById('editQModal').style.display = 'flex';
+      document.getElementById('editQText').focus();
+    }
+
+    function makeExistingOption(id, text) {
+      const row = document.createElement('div');
+      row.className = 'edit-option-row';
+      row.innerHTML =
+        `<input type="hidden" name="opt_text_${id}" value="${esc(text)}">` +
+        `<input type="hidden" name="delete_opt_${id}" value="0" class="del-flag-${id}">` +
+        `<input type="text" class="option-input" value="${esc(text)}" style="flex:1"
+           oninput="this.previousElementSibling.previousElementSibling.value=this.value">` +
+        `<button type="button" class="btn btn-sm btn-danger del-btn-${id}"
+           onclick="markDelete(${id},this)" title="Eliminar">✕</button>`;
+      return row;
+    }
+
+    function markDelete(id, btn) {
+      document.querySelector(`.del-flag-${id}`).value = '1';
+      const row = btn.closest('.edit-option-row');
+      row.style.opacity = '0.4';
+      row.querySelector('input[type=text]').disabled = true;
+      btn.textContent = '↩'; btn.title = 'Restaurar';
+      btn.classList.replace('btn-danger','btn-outline');
+      btn.onclick = () => unmarkDelete(id, btn);
+    }
+
+    function unmarkDelete(id, btn) {
+      document.querySelector(`.del-flag-${id}`).value = '0';
+      const row = btn.closest('.edit-option-row');
+      row.style.opacity = '1';
+      row.querySelector('input[type=text]').disabled = false;
+      btn.textContent = '✕'; btn.title = 'Eliminar';
+      btn.classList.replace('btn-outline','btn-danger');
+      btn.onclick = () => markDelete(id, btn);
+    }
+
+    function addEditOption() {
+      const row = document.createElement('div');
+      row.className = 'edit-option-row';
+      row.innerHTML =
+        `<input type="text" name="new_options" placeholder="Nueva opción" class="option-input" style="flex:1">` +
+        `<button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.edit-option-row').remove()">✕</button>`;
+      document.getElementById('editOptionsList').appendChild(row);
+    }
+
+    function toggleEditOptions(type) {
+      document.getElementById('editOptionsSection').style.display =
+        type === 'multiple_choice' ? 'block' : 'none';
+    }
+
+    function closeEditQ() { document.getElementById('editQModal').style.display = 'none'; }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEditQ(); });
+  </script>
+</body>
+</html>

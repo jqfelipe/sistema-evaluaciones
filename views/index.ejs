@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluaciones disponibles</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Evaluaciones</div>
+    <div class="nav-links">
+      <span class="nav-user">👤 <%= user.name %></span>
+      <% if (user.is_admin) { %>
+        <a href="/admin" class="btn btn-sm">Panel Admin</a>
+      <% } %>
+      <a href="/logout" class="btn btn-sm btn-outline">Cerrar sesión</a>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="page-header">
+      <h1>Evaluaciones disponibles</h1>
+      <p>Selecciona una evaluación para comenzar.</p>
+    </div>
+
+    <% if (quizzes.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h2>Sin evaluaciones activas</h2>
+        <p>No hay ninguna evaluación disponible en este momento.</p>
+      </div>
+    <% } else { %>
+      <div class="quizzes-index">
+        <% quizzes.forEach(q => { %>
+          <a href="/quiz/<%= q.id %>" class="quiz-index-card <%= q.already_submitted ? 'quiz-done' : '' %>">
+            <div class="quiz-index-icon"><%= q.already_submitted ? '✅' : '📝' %></div>
+            <div class="quiz-index-body">
+              <h2><%= q.title %></h2>
+              <% if (q.description) { %><p><%= q.description %></p><% } %>
+              <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap">
+                <span class="quiz-index-meta">
+                  <%= q.question_count %> pregunta<%= q.question_count !== 1 ? 's' : '' %>
+                </span>
+                <% if (q.already_submitted) { %>
+                  <span class="badge badge-success">✅ Ya respondido</span>
+                <% } %>
+              </div>
+            </div>
+            <div class="quiz-index-arrow"><%= q.already_submitted ? '👁' : '→' %></div>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </main>
+</body>
+</html>

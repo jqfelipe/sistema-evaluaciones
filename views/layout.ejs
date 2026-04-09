@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Evaluaciones</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Evaluaciones</div>
+    <div class="nav-links">
+      <% if (typeof user !== 'undefined' && user) { %>
+        <span class="nav-user">👤 <%= user.name %></span>
+        <% if (user.is_admin) { %>
+          <a href="/admin" class="btn btn-sm">Panel Admin</a>
+        <% } %>
+        <a href="/logout" class="btn btn-sm btn-outline">Cerrar sesión</a>
+      <% } %>
+    </div>
+  </nav>
+  <main class="container">
+    <%- body %>
+  </main>
+</body>
+</html>

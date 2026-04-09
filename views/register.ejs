@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrarse - Evaluaciones</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1>📋 Evaluaciones</h1>
+      <h2>Crear Cuenta</h2>
+      <% if (error) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
+      <form method="POST" action="/register">
+        <div class="form-group">
+          <label>Nombre completo</label>
+          <input type="text" name="name" required placeholder="Tu nombre">
+        </div>
+        <div class="form-group">
+          <label>Correo electrónico</label>
+          <input type="email" name="email" required placeholder="usuario@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" name="password" required placeholder="••••••••" minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Crear cuenta</button>
+      </form>
+      <p class="auth-footer">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+    </div>
+  </div>
+</body>
+</html>

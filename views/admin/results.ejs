@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resultados - Evaluaciones</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Admin Panel</div>
+    <div class="nav-links">
+      <a href="/admin" class="btn btn-sm btn-outline">← Evaluaciones</a>
+      <a href="/admin/users" class="btn btn-sm btn-outline">Usuarios</a>
+      <span class="nav-user">👤 <%= user.name %></span>
+      <a href="/logout" class="btn btn-sm btn-outline">Salir</a>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="page-header">
+      <h1>📊 Resultados</h1>
+    </div>
+
+    <div class="card">
+      <h2>Seleccionar Evaluación</h2>
+      <div class="quiz-selector">
+        <% quizzes.forEach(q => { %>
+          <a href="/admin/results/<%= q.id %>"
+             class="quiz-selector-btn <%= selectedQuiz && selectedQuiz.id === q.id ? 'active' : '' %>">
+            <%= q.title %>
+            <span class="badge <%= q.is_active ? 'badge-success' : 'badge-muted' %>">
+              <%= q.is_active ? 'Activa' : 'Inactiva' %>
+            </span>
+          </a>
+        <% }) %>
+        <% if (quizzes.length === 0) { %>
+          <p class="text-muted">No hay evaluaciones creadas.</p>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (selectedQuiz) { %>
+      <div class="page-header">
+        <h2>Resultados: <%= selectedQuiz.title %></h2>
+        <p><strong><%= submissions.length %></strong> respuesta(s) recibida(s)</p>
+      </div>
+
+      <% if (submissions.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>Nadie ha respondido esta evaluación aún.</p>
+        </div>
+      <% } else { %>
+        <% submissions.forEach((sub, si) => { %>
+          <div class="result-card">
+            <div class="result-header">
+              <div>
+                <strong>📧 <%= sub.email %></strong> &nbsp;·&nbsp; <%= sub.name %>
+              </div>
+              <div class="result-date">
+                🕐 <%= new Date(sub.submitted_at).toLocaleString('es') %>
+              </div>
+            </div>
+            <div class="result-answers">
+              <% sub.answers.forEach((a, ai) => { %>
+                <div class="answer-row">
+                  <div class="answer-question">
+                    <span class="question-num">P<%= ai + 1 %></span>
+                    <span class="question-type <%= a.type %>">
+                      <%= a.type === 'multiple_choice' ? '🔘' : '✏️' %>
+                    </span>
+                    <%= a.question_text %>
+                  </div>
+                  <div class="answer-value">
+                    <% if (a.type === 'multiple_choice') { %>
+                      <span class="answer-pill"><%= a.option_text || '(sin respuesta)' %></span>
+                    <% } else { %>
+                      <span class="answer-open"><%= a.text_answer || '(sin respuesta)' %></span>
+                    <% } %>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% }) %>
+      <% } %>
+    <% } %>
+  </main>
+</body>
+</html>

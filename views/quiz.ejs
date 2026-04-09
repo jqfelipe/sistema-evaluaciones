@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluación</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Evaluaciones</div>
+    <div class="nav-links">
+      <span class="nav-user">👤 <%= user.name %></span>
+      <% if (user.is_admin) { %>
+        <a href="/admin" class="btn btn-sm">Panel Admin</a>
+      <% } %>
+      <a href="/logout" class="btn btn-sm btn-outline">Cerrar sesión</a>
+    </div>
+  </nav>
+  <main class="container">
+    <% if (!quiz) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h2>No hay evaluaciones activas</h2>
+        <p>No hay ninguna evaluación disponible en este momento.</p>
+      </div>
+    <% } else { %>
+      <div class="quiz-header">
+        <h1><%= quiz.title %></h1>
+        <% if (quiz.description) { %><p class="quiz-desc"><%= quiz.description %></p><% } %>
+        <p class="quiz-meta">👤 <strong><%= user.email %></strong> &nbsp;|&nbsp; <%= questions.length %> pregunta(s)</p>
+      </div>
+
+      <form method="POST" action="/quiz/submit" id="quizForm">
+        <input type="hidden" name="quiz_id" value="<%= quiz.id %>">
+
+        <% questions.forEach((q, index) => { %>
+          <div class="question-card">
+            <div class="question-header">
+              <span class="question-num">Pregunta <%= index + 1 %></span>
+              <span class="question-type <%= q.type %>">
+                <%= q.type === 'multiple_choice' ? '🔘 Opción múltiple' : '✏️ Desarrollo' %>
+              </span>
+            </div>
+            <p class="question-text"><%= q.text %></p>
+
+            <% if (q.type === 'multiple_choice') { %>
+              <div class="options-list">
+                <% q.options.forEach(opt => { %>
+                  <label class="option-label">
+                    <input type="radio" name="q_<%= q.id %>" value="<%= opt.id %>">
+                    <span class="option-text"><%= opt.text %></span>
+                  </label>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <textarea name="q_<%= q.id %>" class="textarea-answer"
+                placeholder="Escribe tu respuesta aquí..." rows="5"></textarea>
+            <% } %>
+          </div>
+        <% }) %>
+
+        <div class="submit-section">
+          <button type="button" class="btn btn-primary btn-lg" onclick="confirmSubmit()">
+            📤 Enviar Evaluación
+          </button>
+          <p class="submit-note">Una vez enviada, no podrás modificar tus respuestas.</p>
+        </div>
+      </form>
+
+      <!-- Modal de confirmación -->
+      <div id="confirmModal" class="modal-backdrop" style="display:none">
+        <div class="modal-card" style="text-align:center; max-width:420px">
+          <div style="font-size:2.5rem; margin-bottom:0.75rem">⚠️</div>
+          <h2 style="margin-bottom:0.5rem">¿Confirmar envío?</h2>
+          <p style="color:#6b7280; margin-bottom:1.5rem">
+            Estás a punto de enviar tu evaluación.<br>
+            <strong>Esta acción no se puede deshacer</strong> y no podrás volver a responder este examen.
+          </p>
+          <div style="display:flex; gap:0.75rem; justify-content:center">
+            <button class="btn btn-primary btn-lg" id="confirmBtn" onclick="doSubmit()">✅ Sí, enviar</button>
+            <button class="btn btn-outline btn-lg" onclick="closeConfirm()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function confirmSubmit() {
+          document.getElementById('confirmModal').style.display = 'flex';
+        }
+        function closeConfirm() {
+          document.getElementById('confirmModal').style.display = 'none';
+        }
+        function doSubmit() {
+          document.getElementById('confirmBtn').disabled = true;
+          document.getElementById('confirmBtn').textContent = 'Enviando...';
+          document.getElementById('quizForm').submit();
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConfirm(); });
+      </script>
+    <% } %>
+  </main>
+</body>
+</html>

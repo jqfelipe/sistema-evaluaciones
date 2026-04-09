@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ya respondiste - <%= quiz.title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">📋 Evaluaciones</div>
+    <div class="nav-links">
+      <span class="nav-user">👤 <%= user.name %></span>
+      <% if (user.is_admin) { %>
+        <a href="/admin" class="btn btn-sm">Panel Admin</a>
+      <% } %>
+      <a href="/logout" class="btn btn-sm btn-outline">Cerrar sesión</a>
+    </div>
+  </nav>
+  <main class="container">
+    <div class="success-state">
+      <div class="success-icon">✅</div>
+      <h1>Ya respondiste este examen</h1>
+      <p>Ya enviaste tus respuestas para <strong><%= quiz.title %></strong>.</p>
+      <p class="success-email" style="margin-top:0.5rem">
+        🕐 Enviado el <%= new Date(submitted_at).toLocaleString('es') %>
+      </p>
+      <a href="/" class="btn btn-primary" style="margin-top:1.5rem">← Volver al inicio</a>
+    </div>
+  </main>
+</body>
+</html>
