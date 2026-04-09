@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const db = require('../database/db');
 const { isAdmin } = require('../middleware/auth');
 const router = express.Router();
@@ -178,7 +179,26 @@ router.get('/results/:quizId', (req, res) => {
 router.get('/users', (req, res) => {
   const users = db.prepare('SELECT * FROM users ORDER BY created_at ASC').all();
   const allowed = db.prepare('SELECT * FROM allowed_emails ORDER BY created_at DESC').all();
-  res.render('admin/users', { user: req.session.user, users, allowed, error: null, success: null });
+  const { error, success } = req.query;
+  res.render('admin/users', { user: req.session.user, users, allowed, error: error || null, success: success || null });
+});
+
+router.post('/users/:id/reset-password', async (req, res) => {
+  const target = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  if (!target) return res.redirect('/admin/users');
+
+  const { new_password, confirm_password } = req.body;
+
+  if (!new_password || new_password.length < 6)
+    return res.redirect('/admin/users?error=password_too_short');
+
+  if (new_password !== confirm_password)
+    return res.redirect('/admin/users?error=password_mismatch');
+
+  const hash = await bcrypt.hash(new_password, 10);
+  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, target.id);
+
+  res.redirect('/admin/users?success=password_reset');
 });
 
 router.post('/users/:id/toggle-admin', (req, res) => {

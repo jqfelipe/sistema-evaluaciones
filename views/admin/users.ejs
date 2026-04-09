@@ -20,8 +20,15 @@
   <main class="container">
 
     <% const urlError = /* inline check */ false; %>
-    <% if (typeof query !== 'undefined' && query && query.error === 'last_admin') { %>
+    <% if (error === 'last_admin') { %>
       <div class="alert alert-error">No puedes quitar el rol o deshabilitar al único administrador activo.</div>
+    <% } else if (error === 'password_too_short') { %>
+      <div class="alert alert-error">La contraseña debe tener al menos 6 caracteres.</div>
+    <% } else if (error === 'password_mismatch') { %>
+      <div class="alert alert-error">Las contraseñas no coinciden.</div>
+    <% } %>
+    <% if (success === 'password_reset') { %>
+      <div class="alert alert-success">✅ Contraseña restablecida correctamente.</div>
     <% } %>
 
     <!-- CORREOS PERMITIDOS -->
@@ -128,6 +135,10 @@
                       <%= u.is_active ? '🚫 Deshabilitar' : '✅ Habilitar' %>
                     </button>
                   </form>
+                  <button type="button" class="btn btn-sm btn-outline"
+                    onclick="openResetModal(<%= u.id %>, '<%= u.name.replace(/'/g, "\\'") %>') ">
+                    🔑 Restablecer clave
+                  </button>
                 <% } else { %>
                   <span class="text-muted" style="font-size:0.8rem">No puedes modificar tu propia cuenta</span>
                 <% } %>
@@ -139,5 +150,47 @@
     </div>
 
   </main>
+
+  <!-- Modal: Restablecer contraseña -->
+  <div id="resetModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:8px; padding:2rem; width:100%; max-width:420px; box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <h2 style="margin-top:0; font-size:1.2rem;">🔑 Restablecer contraseña</h2>
+      <p style="color:#666; font-size:0.9rem;">Usuario: <strong id="resetUserName"></strong></p>
+      <form id="resetForm" method="POST">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block; margin-bottom:0.3rem; font-size:0.9rem; font-weight:600;">Nueva contraseña</label>
+          <input type="password" name="new_password" id="newPasswordInput" required minlength="6"
+            placeholder="Mínimo 6 caracteres" class="input-lg" style="width:100%; box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block; margin-bottom:0.3rem; font-size:0.9rem; font-weight:600;">Confirmar contraseña</label>
+          <input type="password" name="confirm_password" id="confirmPasswordInput" required minlength="6"
+            placeholder="Repite la contraseña" class="input-lg" style="width:100%; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+          <button type="button" onclick="closeResetModal()" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn btn-primary">💾 Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openResetModal(userId, userName) {
+      document.getElementById('resetUserName').textContent = userName;
+      document.getElementById('resetForm').action = '/admin/users/' + userId + '/reset-password';
+      document.getElementById('newPasswordInput').value = '';
+      document.getElementById('confirmPasswordInput').value = '';
+      const modal = document.getElementById('resetModal');
+      modal.style.display = 'flex';
+      document.getElementById('newPasswordInput').focus();
+    }
+    function closeResetModal() {
+      document.getElementById('resetModal').style.display = 'none';
+    }
+    document.getElementById('resetModal').addEventListener('click', function(e) {
+      if (e.target === this) closeResetModal();
+    });
+  </script>
 </body>
 </html>
